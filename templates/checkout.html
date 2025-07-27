@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Pokladna | Interní E-shop{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Potvrzení objednávky</h1>
+
+<form method="POST" action="{{ url_for('checkout') }}">
+  <div class="row">
+
+    <!-- levý sloupec: shrnutí košíku, dopravy, adresy, poznámky -->
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Produkty</h5>
+          <ul class="list-group">
+            {% for item in cart_items %}
+              <li class="list-group-item d-flex align-items-center">
+                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}"
+                     class="me-3 rounded" style="width:50px; height:50px; object-fit:cover;">
+                <div class="flex-grow-1">
+                  <strong>{{ item.product.name }}</strong><br>
+                  {{ item.quantity }} × {{ item.product.price }} Kč = {{ item.product.price * item.quantity }} Kč
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Doprava</h5>
+          <p class="mb-1">
+            <strong>Způsob:</strong> {{ chosen_shipping.name }} – {{ chosen_shipping.price }} Kč
+          </p>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Doručovací adresa</h5>
+          <p>{{ shipping_address.replace('\n','<br>')|safe }}</p>
+        </div>
+      </div>
+
+      {% if note %}
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Poznámka k objednávce</h5>
+            <p>{{ note|e }}</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- pravý sloupec: kredity + cenové shrnutí + akce -->
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Kredity</h5>
+          <p>Máte k dispozici: <strong>{{ current_user.credits }} Kč</strong></p>
+
+          {% if applied_credits %}
+            <p>Uplatněno: <strong>{{ applied_credits }} Kč</strong></p>
+          {% else %}
+            <button type="submit" name="apply_credits" value="1"
+                    class="btn btn-outline-secondary w-100 mb-3">
+              <i class="fas fa-coins me-1"></i> Uplatnit kredity
+            </button>
+          {% endif %}
+
+          <hr>
+
+          <h5 class="mb-3">Souhrn ceny</h5>
+          <p class="mb-1">Produkty: {{ subtotal }} Kč</p>
+          <p class="mb-1">Doprava: {{ chosen_shipping.price }} Kč</p>
+          {% if applied_credits %}
+            <p class="mb-1">Kredity: -{{ applied_credits }} Kč</p>
+          {% endif %}
+          <hr>
+          <h4>Celkem: {{ total_due }} Kč</h4>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <a href="{{ url_for('cart') }}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i> Upravit objednávku
+        </a>
+        <button type="submit" name="confirm_order" value="1"
+                class="btn btn-primary">
+          Dokončit objednávku
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

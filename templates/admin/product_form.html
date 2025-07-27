@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if product %}Upravit produkt{% else %}Přidat produkt{% endif %} | Admin
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if product %}Upravit produkt{% else %}Přidat nový produkt{% endif %}</h1>
+    <a href="{{ url_for('admin_products') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Zpět na seznam
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" action="{% if product %}{{ url_for('admin_edit_product', product_id=product.id) }}{% else %}{{ url_for('admin_add_product') }}{% endif %}">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Název produktu *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ product.name if product else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Popis produktu *</label>
+                        <textarea class="form-control" id="description" name="description" rows="6" required>{{ product.description if product else '' }}</textarea>
+                        <div class="form-text">Podrobný popis produktu. Můžete použít HTML formátování.</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="price" class="form-label">Cena *</label>
+                            <input type="number" class="form-control" id="price" name="price" value="{{ product.price if product else '' }}" min="0" step="1" required>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="mb-3">
+                        <label for="specifications" class="form-label">Specifikace</label>
+                        <textarea class="form-control" id="specifications" name="specifications" rows="4">{{ product.specifications if product else '' }}</textarea>
+                        <div class="form-text">Technické specifikace produktu. Každý řádek ve formátu: Klíč: Hodnota</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">Obrázek produktu</div>
+                        <div class="card-body">
+                            {% if product and product.image_filename %}
+                                <div class="text-center mb-3">
+                                    <img src="{{ url_for('static', filename='uploads/products/' + product.image_filename) }}" alt="{{ product.name }}" class="img-fluid img-thumbnail">
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Nahrát obrázek</label>
+                                <input class="form-control" type="file" id="image" name="image" accept="image/*">
+                                <div class="form-text">Doporučený formát: JPEG, PNG. Max. velikost: 5 MB.</div>
+                            </div>
+                            
+                            {% if product and product.image_filename %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="delete_image" name="delete_image">
+                                    <label class="form-check-label" for="delete_image">
+                                        Odstranit stávající obrázek
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">Nastavení produktu</div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="active" name="active" {% if product and product.active %}checked{% elif not product %}checked{% endif %}>
+                                <label class="form-check-label" for="active">
+                                    Aktivní produkt
+                                </label>
+                                <div class="form-text">Neaktivní produkty se nezobrazují v obchodě.</div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="featured" name="featured" {% if product and product.featured %}checked{% endif %}>
+                                <label class="form-check-label" for="featured">
+                                    Doporučený produkt
+                                </label>
+                                <div class="form-text">Doporučené produkty se zobrazují na hlavní stránce.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">SEO informace</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="meta_title" class="form-label">Meta titulek</label>
+                                <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ product.meta_title if product else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="meta_description" class="form-label">Meta popis</label>
+                                <textarea class="form-control" id="meta_description" name="meta_description" rows="3">{{ product.meta_description if product else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{{ url_for('admin_products') }}" class="btn btn-secondary me-2">Zrušit</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if product %}Uložit změny{% else %}Přidat produkt{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inicializace WYSIWYG editoru pro popis produktu
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ClassicEditor !== 'undefined') {
+            ClassicEditor
+                .create(document.querySelector('#description'))
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+    });
+</script>
+{% endblock %}

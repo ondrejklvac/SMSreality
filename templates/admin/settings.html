@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+
+{% block title %}Nastavení | Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Nastavení systému</h1>
+    <div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Zpět na dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Navigace</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" role="tablist">
+                    <a class="list-group-item list-group-item-action active" id="general-tab" data-bs-toggle="list" href="#general" role="tab" aria-controls="general">
+                        <i class="fas fa-cog me-2"></i>Obecné nastavení
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="store-tab" data-bs-toggle="list" href="#store" role="tab" aria-controls="store">
+                        <i class="fas fa-store me-2"></i>Nastavení obchodu
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="shipping-tab" data-bs-toggle="list" href="#shipping" role="tab" aria-controls="shipping">
+                        <i class="fas fa-truck me-2"></i>Doprava
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="email-tab" data-bs-toggle="list" href="#email" role="tab" aria-controls="email">
+                        <i class="fas fa-envelope me-2"></i>E-mailové šablony
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="backup-tab" data-bs-toggle="list" href="#backup" role="tab" aria-controls="backup">
+                        <i class="fas fa-database me-2"></i>Zálohy
+                    </a>
+                    <a class="list-group-item list-group-item-action" id="logs-tab" data-bs-toggle="list" href="#logs" role="tab" aria-controls="logs">
+                        <i class="fas fa-file-alt me-2"></i>Systémové logy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <div class="tab-content">
+            <!-- Obecné nastavení -->
+            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Obecné nastavení</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('admin_update_settings') }}" enctype="multipart/form-data">
+                            <input type="hidden" name="section" value="general">
+                            
+                            <div class="mb-3">
+                                <label for="site_name" class="form-label">Název webu</label>
+                                <input type="text" class="form-control" id="site_name" name="site_name" value="{{ settings.site_name }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="site_description" class="form-label">Popis webu</label>
+                                <textarea class="form-control" id="site_description" name="site_description" rows="2">{{ settings.site_description }}</textarea>
+                                <div class="form-text">Krátký popis webu pro SEO účely.</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="contact_email" class="form-label">Kontaktní e-mail</label>
+                                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings.contact_email }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contact_phone" class="form-label">Kontaktní telefon</label>
+                                    <input type="text" class="form-control" id="contact_phone" name="contact_phone" value="{{ settings.contact_phone }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="logo" class="form-label">Logo webu</label>
+                                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                                <div class="form-text">Doporučený rozměr: 200x50 px. Ponechte prázdné, pokud nechcete měnit.</div>
+                                {% if settings.logo %}
+                                    <div class="mt-2">
+                                        <img src="{{ url_for('static', filename='uploads/' + settings.logo) }}" alt="Logo" style="max-height: 50px;">
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input" type="checkbox" id="remove_logo" name="remove_logo">
+                                            <label class="form-check-label" for="remove_logo">
+                                                Odstranit logo
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="favicon" class="form-label">Favicon</label>
+                                <input type="file" class="form-control" id="favicon" name="favicon" accept="image/x-icon,image/png">
+                                <div class="form-text">Doporučený formát: .ico nebo .png, rozměr 32x32 px.</div>
+                                {% if settings.favicon %}
+                                    <div class="mt-2">
+                                        <img src="{{ url_for('static', filename='uploads/' + settings.favicon) }}" alt="Favicon" style="max-height: 32px;">
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input" type="checkbox" id="remove_favicon" name="remove_favicon">
+                                            <label class="form-check-label" for="remove_favicon">
+                                                Odstranit favicon
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="footer_text" class="form-label">Text v patičce</label>
+                                <textarea class="form-control" id="footer_text" name="footer_text" rows="2">{{ settings.footer_text }}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Sociální sítě</label>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-facebook"></i></span>
+                                            <input type="url" class="form-control" name="social_facebook" value="{{ settings.social_facebook }}" placeholder="URL Facebook stránky">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-instagram"></i></span>
+                                            <input type="url" class="form-control" name="social_instagram" value="{{ settings.social_instagram }}" placeholder="URL Instagram profilu">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="analytics_code" class="form-label">Google Analytics kód</label>
+                                <textarea class="form-control" id="analytics_code" name="analytics_code" rows="3">{{ settings.analytics_code }}</textarea>
+                                <div class="form-text">Vložte celý kód pro sledování (např. začínající &lt;script&gt;).</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode" {% if settings.maintenance_mode %}checked{% endif %}>
+                                    <label class="form-check-label" for="maintenance_mode">Režim údržby</label>
+                                </div>
+                                <div class="form-text">Když je aktivní, web bude zobrazovat stránku s informací o údržbě.</div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Uložit nastavení</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nastavení obchodu -->
+            <div class="tab-pane fade" id="store" role="tabpanel" aria-labelledby="store-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Nastavení obchodu</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('admin_update_settings') }}">
+                            <input type="hidden" name="section" value="store">
+                            
+                            <div class="mb-3">
+                                <label for="currency" class="form-label">Měna</label>
+                                <select class="form-select" id="currency" name="currency">
+                                    <option value="CZK" {% if settings.currency == 'CZK' %}selected{% endif %}>Česká koruna (Kč)</option>
+                                    <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>Euro (€)</option>
+                                    <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>Americký dolar ($)</option>
+                                    <option value="GBP" {% if settings.currency == 'GBP' %}selected{% endif %}>Britská libra (£)</option>
+                                    <option value="CREDITS" {% if settings.currency == 'CREDITS' %}selected{% endif %}>Kredity</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="products_per_page" class="form-label">Počet produktů na stránku</label>
+                                <input type="number" class="form-control" id="products_per_page" name="products_per_page" value="{{ settings.products_per_page }}" min="1" max="100" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show_out_of_stock" name="show_out_of_stock" {% if settings.show_out_of_stock %}checked{% endif %}>
+                                    <label class="form-check-label" for="show_out_of_stock">Zobrazovat produkty, které nejsou skladem</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="allow_guest_checkout" name="allow_guest_checkout" {% if settings.allow_guest_checkout %}checked{% endif %}>
+                                    <label class="form-check-label" for="allow_guest_checkout">Povolit nákup bez registrace</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enable_reviews" name="enable_reviews" {% if settings.enable_reviews %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_reviews">Povolit recenze produktů</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="low_stock_threshold" class="form-label">Hranice nízkého stavu skladu</label>
+                                <input type="number" class="form-control" id="low_stock_threshold" name="low_stock_threshold" value="{{ settings.low_stock_threshold }}" min="0" required>
+                                <div class="form-text">Při poklesu pod tuto hodnotu bude produkt označen jako "nízký stav skladu".</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="default_category" class="form-label">Výchozí kategorie</label>
+                                <select class="form-select" id="default_category" name="default_category">
+                                    <option value="">-- Žádná --</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if settings.default_category == category.id %}selected{% endif %}>{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Uložit nastavení</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Doprava -->
+            <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Nastavení dopravy</h5>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addShippingModal">
+                            <i class="fas fa-plus me-1"></i>Přidat způsob dopravy
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Název</th>
+                                        <th>Cena</th>
+                                        <th>Aktivní</th>
+                                        <th>Akce</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for method in shipping_methods %}
+                                        <tr>
+                                            <td>{{ method.name }}</td>
+                                            <td>{{ method.price }} {{ settings.currency }}</td>
+                                            <td>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input shipping-status-toggle" type="checkbox" 
+                                                           data-id="{{ method.id }}" 
+                                                           {% if method.active %}checked{% endif %}>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-primary edit-shipping" 
+                                                            data-id="{{ method.id }}"
+                                                            data-name="{{ method.name }}"
+                                                            data-price="{{ method.price }}"
+                                                            data-description="{{ method.description }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger delete-shipping" data-id="{{ method.id }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- E-mailové šablony -->
+            <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">E-mailové šablony</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            V šablonách můžete používat následující proměnné: <code>{user_name}</code>, <code>{order_id}</code>, <code>{order_total}</code>, <code>{site_name}</code>, atd.
+                        </div>
+                        
+                        <ul class="nav nav-tabs mb-3" id="emailTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="welcome-tab" data-bs-toggle="tab" data-bs-target="#welcome" type="button" role="tab" aria-controls="welcome" aria-selected="true">Uvítací e-mail</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="order-confirmation-tab" data-bs-toggle="tab" data-bs-target="#order-confirmation" type="button" role="tab" aria-controls="order-confirmation" aria-selected="false">Potvrzení objednávky</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="shipping-notification-tab" data-bs-toggle="tab" data-bs-target="#shipping-notification" type="button" role="tab" aria-controls="shipping-notification" aria-selected="false">Oznámení o odeslání</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="emailTabsContent">
+                            <div class="tab-pane fade show active" id="welcome" role="tabpanel" aria-labelledby="welcome-tab">
+                                <form method="POST" action="{{ url_for('admin_update_email_template') }}">
+                                    <input type="hidden" name="template_name" value="welcome">
+                                    
+                                    <div class="mb-3">
+                                        <label for="welcome_subject" class="form-label">Předmět</label>
+                                        <input type="text" class="form-control" id="welcome_subject" name="subject" value="{{ email_templates.welcome.subject }}" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="welcome_body" class="form-label">Obsah e-mailu</label>
+                                        <textarea class="form-control" id="welcome_body" name="body" rows="10" required>{{ email_templates.welcome.body }}</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="welcome_active" name="active" {% if email_templates.welcome.active %}checked{% endif %}>
+                                            <label class="form-check-label" for="welcome_active">Aktivní</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">Uložit šablonu</button>
+                                </form>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="order-confirmation" role="tabpanel" aria-labelledby="order-confirmation-tab">
+                                <form method="POST" action="{{ url_for('admin_update_email_template') }}">
+                                    <input type="hidden" name="template_name" value="order_confirmation">
+                                    
+                                    <div class="mb-3">
+                                        <label for="order_confirmation_subject" class="form-label">Předmět</label>
+                                        <input type="text" class="form-control" id="order_confirmation_subject" name="subject" value="{{ email_templates.order_confirmation.subject }}" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="order_confirmation_body" class="form-label">Obsah e-mailu</label>
+                                        <textarea class="form-control" id="order_confirmation_body" name="body" rows="10" required>{{ email_templates.order_confirmation.body }}</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="order_confirmation_active" name="active" {% if email_templates.order_confirmation.active %}checked{% endif %}>
+                                            <label class="form-check-label" for="order_confirmation_active">Aktivní</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">Uložit šablonu</button>
+                                </form>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="shipping-notification" role="tabpanel" aria-labelledby="shipping-notification-tab">
+                                <form method="POST" action="{{ url_for('admin_update_email_template') }}">
+                                    <input type="hidden" name="template_name" value="shipping_notification">
+                                    
+                                    <div class="mb-3">
+                                        <label for="shipping_notification_subject" class="form-label">Předmět</label>
+                                        <input type="text" class="form-control" id="shipping_notification_subject" name="subject" value="{{ email_templates.shipping_notification.subject }}" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="shipping_notification_body" class="form-label">Obsah e-mailu</label>
+                                        <textarea class="form-control" id="shipping_notification_body" name="body" rows="10" required>{{ email_templates.shipping_notification.body }}</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="shipping_notification_active" name="active" {% if email_templates.shipping_notification.active %}checked{% endif %}>
+                                            <label class="form-check-label" for="shipping_notification_active">Aktivní</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">Uložit šablonu</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zálohy -->
+            <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Zálohy databáze</h5>
+                        <button type="button" class="btn btn-primary" id="createBackup">
+                            <i class="fas fa-download me-2"></i>Vytvořit zálohu
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Pravidelné zálohování databáze je důležité pro ochranu vašich dat. Doporučujeme vytvářet zálohy alespoň jednou týdně.
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Název souboru</th>
+                                        <th>Datum vytvoření</th>
+                                        <th>Velikost</th>
+                                        <th>Akce</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for backup in backups %}
+                                        <tr>
+                                            <td>{{ backup.filename }}</td>
+                                            <td>{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                            <td>{{ backup.size }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('admin_download_backup', filename=backup.filename) }}" class="btn btn-outline-primary">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-success restore-backup" data-filename="{{ backup.filename }}">
+                                                        <i class="fas fa-undo"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger delete-backup" data-filename="{{ backup.filename }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Systémové logy -->
+            <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Systémové logy</h5>
+                        <button type="button" class="btn btn-danger" id="clearLogs">
+                            <i class="fas fa-trash me-2"></i>Vymazat logy
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="logLevel" class="form-label">Úroveň logů</label>
+                            <select class="form-select" id="logLevel">
+                                <option value="all">Všechny</option>
+                                <option value="error">Pouze chyby</option>
+                                <option value="warning">Varování a chyby</option>
+                                <option value="info">Informace, varování a chyby</option>
+                            </select>
+                        </div>
+                        
+                        <div class="log-container bg-dark text-light p-3 rounded" style="height: 500px; overflow-y: auto; font-family: monospace;">
+                            {% for log in logs %}
+                                <div class="log-entry {% if log.level == 'ERROR' %}text-danger{% elif log.level == 'WARNING' %}text-warning{% elif log.level == 'INFO' %}text-info{% endif %}">
+                                    [{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}] [{{ log.level }}] {{ log.message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pro přidání způsobu dopravy -->
+<div class="modal fade" id="addShippingModal" tabindex="-1" aria-labelledby="addShippingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addShippingModalLabel">Přidat způsob dopravy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shippingForm" method="POST" action="{{ url_for('admin_add_shipping_method') }}">
+                    <input type="hidden" id="shipping_id" name="id">
+                    
+                    <div class="mb-3">
+                        <label for="shipping_name" class="form-label">Název</label>
+                        <input type="text" class="form-control" id="shipping_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="shipping_price" class="form-label">Cena</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="shipping_price" name="price" min="0" step="0.01" required>
+                            <span class="input-group-text">{{ settings.currency }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="shipping_description" class="form-label">Popis</label>
+                        <textarea class="form-control" id="shipping_description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="shipping_active" name="active" checked>
+                        <label class="form-check-label" for="shipping_active">
+                            Aktivní
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+                <button type="submit" form="shippingForm" class="btn btn-primary">Uložit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pro potvrzení obnovení zálohy -->
+<div class="modal fade" id="restoreBackupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Obnovit zálohu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Varování:</strong> Obnovení zálohy přepíše všechna aktuální data v databázi. Tento krok nelze vrátit.
+                </div>
+                <p>Opravdu chcete obnovit zálohu <strong id="restoreFilename"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+                <form id="restoreForm" method="POST" action="{{ url_for('admin_restore_backup') }}">
+                    <input type="hidden" id="restore_filename" name="filename">
+                    <button type="submit" class="btn btn-danger">Obnovit zálohu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Přidání/úprava způsobu dopravy
+        const addShippingModal = document.getElementById('addShippingModal');
+        const shippingForm = document.getElementById('shippingForm');
+        const shippingIdInput = document.getElementById('shipping_id');
+        const shippingNameInput = document.getElementById('shipping_name');
+        const shippingPriceInput = document.getElementById('shipping_price');
+        const shippingDescriptionInput = document.getElementById('shipping_description');
+        const shippingActiveInput = document.getElementById('shipping_active');
+        
+        // Resetování formuláře při otevření modálu pro přidání
+        addShippingModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            
+            if (!button || !button.classList.contains('edit-shipping')) {
+                // Přidání nového způsobu dopravy
+                shippingForm.action = "{{ url_for('admin_add_shipping_method') }}";
+                document.getElementById('addShippingModalLabel').textContent = 'Přidat způsob dopravy';
+                shippingForm.reset();
+                shippingIdInput.value = '';
+            }
+        });
+        
+        // Úprava způsobu dopravy
+        document.querySelectorAll('.edit-shipping').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                const price = this.getAttribute('data-price');
+                const description = this.getAttribute('data-description');
+                
+                shippingForm.action = "{{ url_for('admin_update_shipping_method') }}";
+                document.getElementById('addShippingModalLabel').textContent = 'Upravit způsob dopravy';
+                
+                shippingIdInput.value = id;
+                shippingNameInput.value = name;
+                shippingPriceInput.value = price;
+                shippingDescriptionInput.value = description;
+                
+                const modal = new bootstrap.Modal(addShippingModal);
+                modal.show();
+            });
+        });
+        
+        // Změna stavu dopravy (aktivní/neaktivní)
+        document.querySelectorAll('.shipping-status-toggle').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const id = this.getAttribute('data-id');
+                const active = this.checked;
+                
+                fetch("{{ url_for('admin_update_shipping_status') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        active: active
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Úspěšně aktualizováno
+                    } else {
+                        // Chyba - vrátit přepínač do původního stavu
+                        this.checked = !active;
+                        alert('Chyba při aktualizaci stavu: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    this.checked = !active;
+                    alert('Chyba při komunikaci se serverem.');
+                });
+            });
+        });
+        
+        // Smazání způsobu dopravy
+        document.querySelectorAll('.delete-shipping').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Opravdu chcete smazat tento způsob dopravy?')) {
+                    const id = this.getAttribute('data-id');
+                    
+                    fetch("{{ url_for('admin_delete_shipping_method') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: id
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Odstranit řádek z tabulky
+                            this.closest('tr').remove();
+                        } else {
+                            alert('Chyba při mazání: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Chyba při komunikaci se serverem.');
+                    });
+                }
+            });
+        });
+        
+        // Vytvoření zálohy
+        document.getElementById('createBackup').addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Vytváření zálohy...';
+            
+            fetch("{{ url_for('admin_create_backup') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Chyba při vytváření zálohy: ' + data.error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-download me-2"></i>Vytvořit zálohu';
+                    }
+                })
+                .catch(error => {
+                    alert('Chyba při komunikaci se serverem.');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-download me-2"></i>Vytvořit zálohu';
+                });
+        });
+        
+        // Obnovení zálohy
+        const restoreBackupModal = document.getElementById('restoreBackupModal');
+        const restoreFilenameSpan = document.getElementById('restoreFilename');
+        const restoreFilenameInput = document.getElementById('restore_filename');
+        
+        document.querySelectorAll('.restore-backup').forEach(button => {
+            button.addEventListener('click', function() {
+                const filename = this.getAttribute('data-filename');
+                restoreFilenameSpan.textContent = filename;
+                restoreFilenameInput.value = filename;
+                
+                const modal = new bootstrap.Modal(restoreBackupModal);
+                modal.show();
+            });
+        });
+        
+        // Smazání zálohy
+        document.querySelectorAll('.delete-backup').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Opravdu chcete smazat tuto zálohu?')) {
+                    const filename = this.getAttribute('data-filename');
+                    
+                    fetch("{{ url_for('admin_delete_backup') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: filename
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Odstranit řádek z tabulky
+                            this.closest('tr').remove();
+                        } else {
+                            alert('Chyba při mazání zálohy: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Chyba při komunikaci se serverem.');
+                    });
+                }
+            });
+        });
+        
+        // Filtrování logů
+        document.getElementById('logLevel').addEventListener('change', function() {
+            const level = this.value;
+            const logEntries = document.querySelectorAll('.log-entry');
+            
+            logEntries.forEach(entry => {
+                if (level === 'all') {
+                    entry.style.display = '';
+                } else if (level === 'error' && !entry.classList.contains('text-danger')) {
+                    entry.style.display = 'none';
+                } else if (level === 'warning' && !entry.classList.contains('text-danger') && !entry.classList.contains('text-warning')) {
+                    entry.style.display = 'none';
+                } else if (level === 'info' && entry.classList.contains('text-debug')) {
+                    entry.style.display = 'none';
+                } else {
+                    entry.style.display = '';
+                }
+            });
+        });
+        
+        // Vymazání logů
+        document.getElementById('clearLogs').addEventListener('click', function() {
+            if (confirm('Opravdu chcete vymazat všechny logy?')) {
+                fetch("{{ url_for('admin_clear_logs') }}", {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Vymazat všechny logy z kontejneru
+                        document.querySelector('.log-container').innerHTML = '';
+                    } else {
+                        alert('Chyba při mazání logů: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Chyba při komunikaci se serverem.');
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

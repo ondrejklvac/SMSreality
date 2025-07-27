@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Detail objednávky #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Objednávka č. {{ order.id }}</h1>
+
+  <!-- Základní info -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <h5>Informace o objednávce</h5>
+      <p><strong>Datum:</strong> {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+      <p><strong>Stav:</strong>
+        {% if order.status == 'new' %}
+          <span class="badge bg-info">Nová</span>
+        {% elif order.status == 'processing' %}
+          <span class="badge bg-primary">Zpracovává se</span>
+        {% elif order.status == 'shipped' %}
+          <span class="badge bg-warning text-dark">Odesláno</span>
+        {% elif order.status == 'delivered' %}
+          <span class="badge bg-success">Doručeno</span>
+        {% elif order.status == 'cancelled' %}
+          <span class="badge bg-danger">Zrušeno</span>
+        {% endif %}
+      </p>
+      <p><strong>Způsob doručení:</strong> {{ order.shipping.name }} ({{ order.shipping.price }} Kč)</p>
+      <p><strong>Adresa:</strong><br>{{ order.shipping_address|replace('\n','<br>')|safe }}</p>
+    </div>
+    <div class="col-md-6">
+      <h5>Souhrn cen</h5>
+      <p><strong>Mezisoučet:</strong> {{ order.total_price }} Kč</p>
+      <p><strong>Uplatněné kredity:</strong> {{ order.credits_used or 0 }} Kč</p>
+      <p><strong>Celkem k úhradě:</strong> {{ order.final_price }} Kč</p>
+    </div>
+  </div>
+
+  <!-- Položky -->
+  <h5>Objednané položky</h5>
+  <div class="table-responsive mb-4">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Obrázek</th>
+          <th>Název</th>
+          <th>Cena / ks</th>
+          <th>Množství</th>
+          <th>Celkem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td>
+            <img src="{{ item.product.image_url }}"
+                 alt="{{ item.product.name }}"
+                 style="width:50px;height:50px;object-fit:cover;">
+          </td>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.product.price }} Kč</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.product.price * item.quantity }} Kč</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Poznámka od zákazníka -->
+  {% if order.note %}
+  <div class="mb-4">
+    <h5>Poznámka k objednávce</h5>
+    <p>{{ order.note|replace('\n','<br>')|safe }}</p>
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i>Zpět na Moje objednávky
+  </a>
+</div>
+{% endblock %}

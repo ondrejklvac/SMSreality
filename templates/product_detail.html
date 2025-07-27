@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | Interní E-shop{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Produkty</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="max-height: 400px; object-fit: contain;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <h1 class="mb-3">{{ product.name }}</h1>
+        <h3 class="text-primary mb-4">{{ product.price }} Kč</h3>
+        
+        <div class="mb-4">
+            <h5>Popis produktu</h5>
+            <p>{{ product.description }}</p>
+        </div>
+        
+        {% if product.specifications %}
+            <div class="mb-4">
+                <h5>Specifikace</h5>
+                <table class="table table-striped">
+                    <tbody>
+                        {% for key, value in product.specifications.items() %}
+                            <tr>
+                                <th>{{ key }}</th>
+                                <td>{{ value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        
+        {% if current_user.is_authenticated %}
+            <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" class="mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label for="quantity" class="col-form-label">Množství:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart me-2"></i>Přidat do košíku
+                        </button>
+                    </div>
+                </div>
+                {% if current_user.credits < product.price %}
+                    <small class="text-danger d-block mt-2">Nemáte dostatek kreditů pro nákup tohoto produktu.</small>
+                {% endif %}
+            </form>
+        {% else %}
+            <div class="alert alert-info">
+                Pro přidání produktu do košíku se prosím <a href="{{ url_for('login') }}">přihlaste</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if related_products %}
+    <div class="mt-5">
+        <h3 class="mb-4">Související produkty</h3>
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            {% for related in related_products %}
+                <div class="col">
+                    <div class="card h-100">
+                        <img src="{{ related.image_url }}" class="card-img-top" alt="{{ related.name }}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ related.name }}</h5>
+                            <p class="card-text">{{ related.price }} Kč</p>
+                            <a href="{{ url_for('product_detail', product_id=related.id) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

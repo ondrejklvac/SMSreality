@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Můj profil{% endblock %}
+
+{% block content %}
+
+    <!-- Hlavní obsah -->
+    <div class="col-lg-9">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Osobní údaje</h4>
+                <button class="btn btn-sm btn-outline-primary" id="editProfileBtn">
+                    <i class="fas fa-edit me-1"></i>Upravit
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Zobrazení profilu -->
+                <div id="profileView">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">Uživatelské jméno:</div>
+                        <div class="col-md-8">{{ current_user.username }}</div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">E-mail:</div>
+                        <div class="col-md-8">{{ current_user.email }}</div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">Jméno:</div>
+                        <div class="col-md-8">{{ current_user.first_name or '—' }}</div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">Příjmení:</div>
+                        <div class="col-md-8">{{ current_user.last_name or '—' }}</div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">Telefon:</div>
+                        <div class="col-md-8">{{ current_user.phone or '—' }}</div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-md-end fw-bold">Datum registrace:</div>
+                        <div class="col-md-8">{{ current_user.created_at.strftime('%d.%m.%Y') }}</div>
+                    </div>
+                </div>
+                
+                <!-- Formulář pro úpravu profilu -->
+                <div id="profileForm" style="display: none;">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="row mb-3">
+                            <label for="email" class="col-md-4 col-form-label text-md-end">E-mail:</label>
+                            <div class="col-md-8">
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label for="first_name" class="col-md-4 col-form-label text-md-end">Jméno:</label>
+                            <div class="col-md-8">
+                                {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.first_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label for="last_name" class="col-md-4 col-form-label text-md-end">Příjmení:</label>
+                            <div class="col-md-8">
+                                {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.last_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label for="phone" class="col-md-4 col-form-label text-md-end">Telefon:</label>
+                            <div class="col-md-8">
+                                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.phone.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 offset-md-4">
+                                <button type="button" class="btn btn-secondary me-2" id="cancelEditBtn">Zrušit</button>
+                                <button type="submit" class="btn btn-primary">Uložit změny</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Poslední objednávky -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Poslední objednávky</h4>
+                <a href="{{ url_for('orders') }}" class="btn btn-sm btn-outline-primary">
+                    Všechny objednávky
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Číslo</th>
+                                    <th>Datum</th>
+                                    <th>Stav</th>
+                                    <th>Celkem</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.order_number }}</td>
+                                    <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+                                    <td>
+                                        {% if order.status == 'pending' %}
+                                            <span class="badge bg-warning">Čeká na zpracování</span>
+                                        {% elif order.status == 'processing' %}
+                                            <span class="badge bg-info">Zpracovává se</span>
+                                        {% elif order.status == 'shipped' %}
+                                            <span class="badge bg-primary">Odesláno</span>
+                                        {% elif order.status == 'delivered' %}
+                                            <span class="badge bg-success">Doručeno</span>
+                                        {% elif order.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Zrušeno</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ order.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.total_price }} Kč</td>
+                                    <td>
+                                        <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary">
+                                            Detail
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                        <p class="lead">Zatím nemáte žádné objednávky</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">Prohlédnout produkty</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+
+{% endblock %}

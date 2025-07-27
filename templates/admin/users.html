@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Správa uživatelů | Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Správa uživatelů</h1>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    <i class="fas fa-plus me-2"></i>Přidat uživatele
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Jméno</th>
+            <th>E-mail</th>
+            <th>Adresa</th>
+            <th>Kredity</th>
+            <th>Admin</th>
+            <th>Akce</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.first_name }} {{ u.last_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.address or '–' }}</td>
+            <td>{{ u.credits }}</td>
+            <td>
+              {% if u.is_admin %}
+                <span class="badge bg-success">Ano</span>
+              {% else %}
+                <span class="badge bg-secondary">Ne</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editUserModal{{ u.id }}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-outline-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#creditsModal{{ u.id }}">
+                  <i class="fas fa-coins"></i>
+                </button>
+                <button class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteUserModal{{ u.id }}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+{# --- ADD USER MODAL --- #}
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('admin_add_user') }}">
+      {{ form.csrf_token }}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Přidat uživatele</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Jméno *</label>
+            <input type="text" name="first_name" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Příjmení *</label>
+            <input type="text" name="last_name" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">E-mail *</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Heslo *</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>    
+          <div class="mb-2">
+            <label for="confirm_password" class="form-label">Znovu heslo *</label>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Adresa</label>
+            <textarea name="address" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Kredity</label>
+            <input type="number" name="credits" class="form-control" value="0" min="0">
+          </div>
+          <div class="form-check mb-2">
+            <input type="checkbox" name="is_admin" class="form-check-input" id="addAdminChk">
+            <label class="form-check-label" for="addAdminChk">Administrátor</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-primary">Přidat</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# --- EDIT USER MODALS --- #}
+{% for u in users %}
+<div class="modal fade" id="editUserModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('admin_edit_user', user_id=u.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit uživatele #{{ u.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Jméno</label>
+            <input type="text" name="first_name" class="form-control" value="{{ u.first_name }}" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Příjmení</label>
+            <input type="text" name="last_name" class="form-control" value="{{ u.last_name }}" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">E-mail</label>
+            <input type="email" name="email" class="form-control" value="{{ u.email }}" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Nové heslo</label>
+            <input type="password" name="new_password" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Adresa</label>
+            <textarea name="address" class="form-control" rows="2">{{ u.address }}</textarea>
+          </div>
+          <div class="form-check mb-2">
+            <input type="checkbox"
+                   name="is_admin"
+                   class="form-check-input"
+                   id="adminChk{{ u.id }}"
+                   {% if u.is_admin %}checked{% endif %}>
+            <label class="form-check-label" for="adminChk{{ u.id }}">Administrátor</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+
+{# --- CREDITS MODALS --- #}
+{% for u in users %}
+<div class="modal fade" id="creditsModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('admin_update_credits', user_id=u.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Kredity uživatele #{{ u.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Aktuální kredity: <strong>{{ u.credits }}</strong></label>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Akce</label>
+            <select name="action" class="form-select">
+              <option value="add">Přidat</option>
+              <option value="subtract">Odebrat</option>
+              <option value="set">Nastavit</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Částka</label>
+            <input type="number" name="amount" class="form-control" min="0" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-warning">Aktualizovat</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+
+{# --- DELETE USER MODALS --- #}
+{% for u in users %}
+<div class="modal fade" id="deleteUserModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Smazat uživatele #{{ u.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Opravdu chcete smazat uživatele <strong>{{ u.email }}</strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-danger">Smazat</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

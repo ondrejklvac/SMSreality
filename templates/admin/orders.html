@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Správa objednávek | Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Správa objednávek</h1>
+  <form method="GET" action="{{ url_for('admin_orders') }}" class="d-flex">
+    <select name="status" class="form-select me-2">
+      <option value="">Všechny stavy</option>
+      <option value="new"        {% if request.args.get('status')=='new' %}selected{% endif %}>Nové</option>
+      <option value="processing" {% if request.args.get('status')=='processing' %}selected{% endif %}>Zpracovává se</option>
+      <option value="shipped"    {% if request.args.get('status')=='shipped' %}selected{% endif %}>Odesláno</option>
+      <option value="delivered"  {% if request.args.get('status')=='delivered' %}selected{% endif %}>Doručeno</option>
+      <option value="cancelled"  {% if request.args.get('status')=='cancelled' %}selected{% endif %}>Zrušeno</option>
+    </select>
+    <button type="submit" class="btn btn-outline-primary">Filtrovat</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>…</thead>
+        <tbody>
+          {% for order in orders %}
+      <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.user.first_name }} {{ order.user.last_name }}</td>
+        <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+              <td>{{ order.total_price }} Kč</td>
+              <td>{{ order.shipping.name }}</td>
+              <td>
+                {% if order.status=='new' %}
+                  <span class="badge bg-info">Nová</span>
+                {% elif order.status=='processing' %}
+                  <span class="badge bg-primary">Zpracovává se</span>
+                {% elif order.status=='shipped' %}
+                  <span class="badge bg-warning text-dark">Odesláno</span>
+                {% elif order.status=='delivered' %}
+                  <span class="badge bg-success">Doručeno</span>
+                {% elif order.status=='cancelled' %}
+                  <span class="badge bg-danger">Zrušeno</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <!-- „Detail“ modal -->
+                  <button type="button"
+                          class="btn btn-outline-primary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewOrderModal{{ order.id }}">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <!-- „Edit“ přesměrování -->
+                 <a href="{{ url_for('admin_order_detail', order_id=order.id) }}"
+                     class="btn btn-outline-secondary">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# Modály pro detail a editaci jednotlivých objednávek #}
+{% for order in orders %}
+  <!-- View Order Modal -->
+  <div class="modal fade" id="viewOrderModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Detail objednávky #{{ order.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6>Informace o objednávce</h6>
+              <p><strong>Datum:</strong> {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+              <p><strong>Celková cena:</strong> {{ order.total_price }} Kč</p>
+              <p><strong>Doprava:</strong> {{ order.shipping.name }}</p>
+              <p><strong>Stav:</strong>
+                {% if order.status=='new' %}
+                  <span class="badge bg-info">Nová</span>
+                {% elif order.status=='processing' %}
+                  <span class="badge bg-primary">Zpracovává se</span>
+                {% elif order.status=='shipped' %}
+                  <span class="badge bg-warning text-dark">Odesláno</span>
+                {% elif order.status=='delivered' %}
+                  <span class="badge bg-success">Doručeno</span>
+                {% elif order.status=='cancelled' %}
+                  <span class="badge bg-danger">Zrušeno</span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h6>Informace o zákazníkovi</h6>
+              <p><strong>Jméno:</strong> {{ order.user.first_name }} {{ order.user.last_name }}</p>
+              <p><strong>E-mail:</strong> {{ order.user.email }}</p>
+              <p><strong>Adresa:</strong><br>
+                {{ order.shipping_address.replace('\n','<br>')|safe }}
+              </p>
+            </div>
+          </div>
+
+          <h6>Objednané položky</h6>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Produkt</th>
+                  <th>Cena za kus</th>
+                  <th>Množství</th>
+                  <th>Celkem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in order.items %}
+                  <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.price }} Kč</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price * item.quantity }} Kč</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if order.note %}
+            <div class="mt-3">
+              <h6>Poznámka</h6>
+              <p>{{ order.note }}</p>
+            </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Status Modal -->
+  <div class="modal fade" id="updateStatusModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Aktualizovat stav objednávky #{{ order.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="status{{ order.id }}" class="form-label">Stav</label>
+              <select class="form-select" id="status{{ order.id }}" name="status" required>
+                <option value="new"        {% if order.status=='new' %}selected{% endif %}>Nová</option>
+                <option value="processing" {% if order.status=='processing' %}selected{% endif %}>Zpracovává se</option>
+                <option value="shipped"    {% if order.status=='shipped' %}selected{% endif %}>Odesláno</option>
+                <option value="delivered"  {% if order.status=='delivered' %}selected{% endif %}>Doručeno</option>
+                <option value="cancelled"  {% if order.status=='cancelled' %}selected{% endif %}>Zrušeno</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="tracking_number{{ order.id }}" class="form-label">Číslo zásilky</label>
+              <input type="text" class="form-control"
+                     id="tracking_number{{ order.id }}"
+                     name="tracking_number"
+                     value="{{ order.tracking_number or '' }}">
+            </div>
+            <div class="mb-3">
+              <label for="admin_note{{ order.id }}" class="form-label">Interní poznámka</label>
+              <textarea class="form-control"
+                        id="admin_note{{ order.id }}"
+                        name="admin_note" rows="3">{{ order.admin_note or '' }}</textarea>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="notify_customer{{ order.id }}"
+                     name="notify_customer" checked>
+              <label class="form-check-label" for="notify_customer{{ order.id }}">
+                Informovat zákazníka
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+<nav aria-label="Stránkování" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if pagination.has_prev %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('admin_orders', page=pagination.prev_num, status=request.args.get('status','')) }}">
+          Předchozí
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Předchozí</span></li>
+    {% endif %}
+
+    {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if page %}
+        {% if page == pagination.page %}
+          <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link"
+               href="{{ url_for('admin_orders', page=page, status=request.args.get('status','')) }}">
+              {{ page }}
+            </a>
+          </li>
+        {% endif %}
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('admin_orders', page=pagination.next_num, status=request.args.get('status','')) }}">
+          Další
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Další</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

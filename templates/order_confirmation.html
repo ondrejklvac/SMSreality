@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Potvrzení objednávky | Interní E-shop{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <div class="display-1 text-success mb-4">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <h1 class="mb-4">Děkujeme za Vaši objednávku!</h1>
+    <p class="lead">Vaše objednávka byla úspěšně přijata a bude zpracována.</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Detaily objednávky #{{ order.id }}</h5>
+            <span class="badge bg-primary">{{ order.status }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Informace o objednávce</h6>
+                <p class="mb-1"><strong>Datum objednávky:</strong> {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                <p class="mb-1"><strong>Celková cena:</strong> {{ order.total_price }} Kč/p>
+                <p class="mb-1"><strong>Způsob doručení:</strong> {{ order.shipping_method.name }}</p>
+                <p class="mb-0"><strong>Stav objednávky:</strong> {{ order.status }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Doručovací adresa</h6>
+                <p class="mb-0">{{ order.shipping_address|nl2br }}</p>
+            </div>
+        </div>
+
+        <h6>Objednané položky</h6>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th>Cena za kus</th>
+                        <th>Množství</th>
+                        <th>Celkem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.price }} Kč</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.price * item.quantity }} Kč/td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end fw-bold">Celková cena:</td>
+                        <td class="fw-bold">{{ order.total_price }} Kč</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if order.note %}
+            <div class="mt-3">
+                <h6>Poznámka k objednávce</h6>
+                <p class="mb-0">{{ order.note }}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="d-flex justify-content-between">
+    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i>Zpět na produkty
+    </a>
+    <a href="#" onclick="window.print(); return false;" class="btn btn-outline-secondary">
+        <i class="fas fa-print me-2"></i>Vytisknout potvrzení
+    </a>
+</div>
+{% endblock %}

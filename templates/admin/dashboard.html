@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Administrace | Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Dashboard</h1>
+    <div>
+        <span class="text-muted me-2">Poslední aktualizace:</span>
+        <span>{{ current_time.strftime('%d.%m.%Y %H:%M:%S') }}</span>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Objednávky (Dnes)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.orders_today }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Obrat (Tento měsíc)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.revenue_month }} Kč</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Noví uživatelé (Tento týden)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.new_users_week }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Čekající objednávky</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_orders }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Přehled objednávek (posledních 30 dní)</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chartOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Možnosti
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="chartOptionsDropdown">
+                        <li><a class="dropdown-item" href="#" data-period="7">Posledních 7 dní</a></li>
+                        <li><a class="dropdown-item" href="#" data-period="30">Posledních 30 dní</a></li>
+                        <li><a class="dropdown-item" href="#" data-period="90">Posledních 90 dní</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="ordersChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">Nejprodávanější produkty</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Produkt</th>
+                                        <th>Prodáno</th>
+                                        <th>Obrat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in top_products %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ url_for('admin_edit_product', product_id=product.id) }}">{{ product.name }}</a>
+                                            </td>
+                                            <td>{{ product.sold_count }}</td>
+                                            <td>{{ product.revenue }} Kč</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">Produkty s nízkým stavem</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Produkt</th>
+                                        <th>Skladem</th>
+                                        <th>Akce</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in low_stock_products %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ url_for('admin_edit_product', product_id=product.id) }}">{{ product.name }}</a>
+                                            </td>
+                                            <td>
+                                            <td>
+                                                <a href="{{ url_for('admin_edit_product', product_id=product.id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Poslední objednávky</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for order in recent_orders %}
+                        <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Objednávka #{{ order.id }}</h6>
+                                <small>{{ order.created_at.strftime('%d.%m. %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">{{ order.user.first_name }} {{ order.user.last_name }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>{{ order.total_price }} Kč</small>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Čeká na vyřízení</span>
+                                {% elif order.status == 'processing' %}
+                                    <span class="badge bg-info">Zpracovává se</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-primary">Odesláno</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">Doručeno</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Zrušeno</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary">Zobrazit všechny objednávky</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Noví uživatelé</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for user in recent_users %}
+                        <a href="{{ url_for('admin_users', search=user.email) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ user.first_name }} {{ user.last_name }}</h6>
+                                <small>{{ user.created_at.strftime('%d.%m.%Y') }}</small>
+                            </div>
+                            <p class="mb-1">{{ user.email }}</p>
+                            <small>
+                                {% if user.is_admin %}
+                                    <span class="badge bg-danger">Administrátor</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Uživatel</span>
+                                {% endif %}
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-primary">Zobrazit všechny uživatele</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Data pro graf
+        const orderData = {{ order_chart_data|tojson }};
+        
+        // Inicializace grafu
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+        const ordersChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: orderData.labels,
+                datasets: [
+                    {
+                        label: 'Počet objednávek',
+                        data: orderData.orders,
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointHoverBorderColor: '#fff',
+                        pointHitRadius: 10,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Obrat (kredity)',
+                        data: orderData.revenue,
+                        borderColor: 'rgba(28, 200, 138, 1)',
+                        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: 'rgba(28, 200, 138, 1)',
+                        pointHoverBorderColor: '#fff',
+                        pointHitRadius: 10,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Počet objednávek'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Obrat (kredity)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+        
+        // Přepínání období grafu
+        document.querySelectorAll('[data-period]').forEach(item => {
+            item.addEventListener('click', event => {
+                event.preventDefault();
+                const period = event.target.getAttribute('data-period');
+                
+                // Zde by byl AJAX požadavek pro získání nových dat
+                fetch(`/admin/api/chart-data?period=${period}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Aktualizace grafu
+                        ordersChart.data.labels = data.labels;
+                        ordersChart.data.datasets[0].data = data.orders;
+                        ordersChart.data.datasets[1].data = data.revenue;
+                        ordersChart.update();
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}

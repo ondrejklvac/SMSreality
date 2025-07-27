@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Správa produktů | Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Správa produktů</h1>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+    <i class="fas fa-plus me-2"></i>Přidat produkt
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Obrázek</th>
+            <th>Název</th>
+            <th>Cena</th>
+            <th>Akce</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td>{{ product.id }}</td>
+            <td>
+              <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                   style="width:50px; height:50px; object-fit:cover;">
+            </td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.price }} Kč</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editProductModal{{ product.id }}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form method="POST"
+                      action="{{ url_for('admin_delete_product', product_id=product.id) }}"
+                      onsubmit="return confirm('Opravdu smazat produkt #{{ product.id }}?');">
+                  <button class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# ---------------------------------------------------------------- #}
+{# --   TEĎ VŠECHNY MODÁLKY PO TABULCE                        -- #}
+{# ---------------------------------------------------------------- #}
+
+{# --- Edit Product Modals --- #}
+{% for product in products %}
+<div class="modal fade" id="editProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form method="POST"
+          action="{{ url_for('admin_edit_product', product_id=product.id) }}"
+          enctype="multipart/form-data">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit produkt #{{ product.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Název</label>
+            <input type="text" name="name" class="form-control"
+                   value="{{ product.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cena (Kč)</label>
+            <input type="number" name="price" class="form-control"
+                   value="{{ product.price }}" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Popis</label>
+            <textarea name="description" rows="3" class="form-control" required>{{ product.description }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label for="image{{ product.id }}" class="form-label">Obrázek</label>
+            <input type="file" name="image" id="image{{ product.id }}" class="form-control">
+            {% if product.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
+                 class="mt-2" style="max-height:100px;">
+            {% endif %}
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" name="is_active" class="form-check-input"
+                   id="active{{ product.id }}"
+                   {% if product.is_active %}checked{% endif %}>
+            <label for="active{{ product.id }}" class="form-check-label">Aktivní</label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Specifikace</label>
+            <div id="specifications{{ product.id }}">
+              {% if product.specifications %}
+                {% for key, value in product.specifications.items() %}
+                  <div class="row mb-2 specification-row">
+                    <div class="col-md-5">
+                      <input type="text" name="spec_keys[]" class="form-control"
+                             value="{{ key }}" placeholder="Název">
+                    </div>
+                    <div class="col-md-5">
+                      <input type="text" name="spec_values[]" class="form-control"
+                             value="{{ value }}" placeholder="Hodnota">
+                    </div>
+                    <div class="col-md-2">
+                      <button type="button" class="btn btn-outline-danger remove-spec">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                    onclick="addSpecificationRow('specifications{{ product.id }}')">
+              <i class="fas fa-plus me-1"></i>Přidat specifikaci
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-primary">Uložit změny</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{# --- Add Product Modal --- #}
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Přidat produkt</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <input type="text" name="name" class="form-control" placeholder="Název produktu" required>
+          </div>
+          <div class="mb-2">
+            <input type="number" name="price" class="form-control" placeholder="Cena v korunách" min="0" required>
+          </div>
+          <div class="mb-2">
+            <textarea name="description" rows="3" class="form-control" placeholder="Popis produktu" required></textarea>
+          </div>
+          <div class="mb-2">
+            <input type="file" name="image" class="form-control" required>
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" name="is_active" id="is_active_new" class="form-check-input" checked>
+            <label for="is_active_new" class="form-check-label">Aktivní produkt</label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Specifikace</label>
+            <div id="specifications-new">
+              <div class="row mb-2 specification-row">
+                <div class="col-md-5">
+                  <input type="text" name="spec_keys[]" class="form-control" placeholder="Název">
+                </div>
+                <div class="col-md-5">
+                  <input type="text" name="spec_values[]" class="form-control" placeholder="Hodnota">
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-outline-danger remove-spec">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                    onclick="addSpecificationRow('specifications-new')">
+              <i class="fas fa-plus me-1"></i>Přidat specifikaci
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-primary">Přidat produkt</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function addSpecificationRow(containerId) {
+    const container = document.getElementById(containerId);
+    const row = document.createElement('div');
+    row.className = 'row mb-2 specification-row';
+    row.innerHTML = `
+      <div class="col-md-5">
+        <input type="text" name="spec_keys[]" class="form-control" placeholder="Název">
+      </div>
+      <div class="col-md-5">
+        <input type="text" name="spec_values[]" class="form-control" placeholder="Hodnota">
+      </div>
+      <div class="col-md-2">
+        <button type="button" class="btn btn-outline-danger remove-spec">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+    container.appendChild(row);
+    row.querySelector('.remove-spec').addEventListener('click', () => row.remove());
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.remove-spec').forEach(btn =>
+      btn.addEventListener('click', () => btn.closest('.specification-row').remove())
+    );
+  });
+</script>
+{% endblock %}

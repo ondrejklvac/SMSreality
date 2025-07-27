@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Produkty | Interní E-shop{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-4">Produkty pro realitní makléře</h1>
+    </div>
+    <div class="col-md-4">
+        <form method="GET" action="{{ url_for('index') }}" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" placeholder="Hledat produkty..." value="{{ request.args.get('search', '') }}">
+            <button type="submit" class="btn btn-outline-primary">Hledat</button>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="btn-group">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary {% if not request.args.get('category') %}active{% endif %}">Vše</a>
+            {% for category in categories %}
+                <a href="{{ url_for('index', category=category.id) }}" class="btn btn-outline-secondary {% if request.args.get('category')|int == category.id %}active{% endif %}">
+                    {{ category.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if products %}
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for product in products %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="position-relative">
+                        <img src="{{ product.image_url }}"
+                             class="card-img-top"
+                             alt="{{ product.name }}"
+                             style="height: 200px; object-fit: cover;">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text flex-grow-1">
+                            {{ product.description|truncate(100) }}
+                        </p>
+
+                        <form method="POST"
+                              action="{{ url_for('add_to_cart', product_id=product.id) }}"
+                              class="d-flex align-items-center mt-3">
+                            {# Pokud používáte CSRF ochranu, odkomentujte příslušné volání: #}
+                            {# {{ csrf_token() }} #}
+
+                            <!-- Zobrazení ceny za 1 kus -->
+                            <span class="fw-bold text-primary me-3">
+                                {{ product.price }} Kč
+                            </span>
+
+                            <!-- Ovládání množství -->
+                            <div class="input-group input-group-sm" style="width: 120px;">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        onclick="this.nextElementSibling.stepDown()">−</button>
+                                <input type="number"
+                                       name="quantity"
+                                       class="form-control text-center"
+                                       value="1"
+                                       min="1"
+                                       style="max-width: 60px;" />
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        onclick="this.previousElementSibling.stepUp()">+</button>
+                            </div>
+
+                            <!-- Tlačítko přidat do košíku -->
+                            <button type="submit"
+                                    class="btn btn-sm btn-primary ms-2">
+                                Přidat do košíku
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <nav aria-label="Stránkování" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">Předchozí</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Předchozí</span>
+                </li>
+            {% endif %}
+
+            {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                    {% if page == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=page, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.next_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">Další</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Další</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i> Nebyly nalezeny žádné produkty odpovídající vašemu vyhledávání.
+    </div>
+{% endif %}
+{% endblock %}

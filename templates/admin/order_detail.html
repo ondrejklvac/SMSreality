@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Objednávka #{{ order.id }} | Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Detail objednávky #{{ order.id }}</h1>
+    <div>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Zpět na seznam
+        </a>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Tisk
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Položky objednávky</h5>
+                <span class="badge bg-primary">{{ order.items|length }} položek</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Produkt</th>
+                                <th>Cena/ks</th>
+                                <th>Množství</th>
+                                <th class="text-end">Celkem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.product and item.product.image_filename %}
+                                                <img src="{{ url_for('static', filename='uploads/products/' + item.product.image_filename) }}" alt="{{ item.product_name }}" class="img-thumbnail me-3" style="max-height: 50px;">
+                                            {% else %}
+                                                <div class="text-center text-muted me-3" style="width: 50px;">
+                                                    <i class="fas fa-image fa-2x"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div>{{ item.product_name }}</div>
+                                                {% if item.product %}
+                                                    <small class="text-muted">ID: {{ item.product.id }}</small>
+                                                {% else %}
+                                                    <small class="text-danger">Produkt byl smazán</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.price }} Kč</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td class="text-end">{{ item.price * item.quantity }} Kč</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Mezisoučet:</strong></td>
+                                <td class="text-end">{{ order.subtotal_price }} Kč</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Doprava:</strong></td>
+                                <td class="text-end">{{ order.shipping_price }} Kč</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Celkem:</strong></td>
+                                <td class="text-end"><strong>{{ order.total_price }} Kč</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Historie objednávky</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Status</th>
+                                <th>Poznámka</th>
+                                <th>Uživatel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in order.status_history|sort(attribute='created_at', reverse=true) %}
+                                <tr>
+                                    <td>{{ history.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                    <td>
+                                        {% if history.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Čeká na vyřízení</span>
+                                        {% elif history.status == 'processing' %}
+                                            <span class="badge bg-info">Zpracovává se</span>
+                                        {% elif history.status == 'shipped' %}
+                                            <span class="badge bg-primary">Odesláno</span>
+                                        {% elif history.status == 'delivered' %}
+                                            <span class="badge bg-success">Doručeno</span>
+                                        {% elif history.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Zrušeno</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ history.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ history.note or '-' }}</td>
+                                    <td>
+                                        {% if history.admin %}
+                                            <span class="text-primary">{{ history.admin.first_name }} {{ history.admin.last_name }}</span>
+                                        {% elif history.status == 'pending' %}
+                                            <span class="text-muted">Systém</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Aktualizovat status objednávky</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Nový status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Čeká na vyřízení</option>
+                            <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Zpracovává se</option>
+                            <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Odesláno</option>
+                            <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Doručeno</option>
+                            <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Zrušeno</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="note" class="form-label">Poznámka (volitelné)</label>
+                        <input type="text" class="form-control" id="note" name="note" placeholder="Důvod změny statusu...">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Aktualizovat</button>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify_customer" name="notify_customer" checked>
+                            <label class="form-check-label" for="notify_customer">
+                                Informovat zákazníka emailem o změně statusu
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informace o objednávce</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>ID objednávky:</th>
+                            <td>#{{ order.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Datum vytvoření:</th>
+                            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Čeká na vyřízení</span>
+                                {% elif order.status == 'processing' %}
+                                    <span class="badge bg-info">Zpracovává se</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-primary">Odesláno</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">Doručeno</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Zrušeno</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Způsob dopravy:</th>
+                            <td>{{ order.shipping_method }}</td>
+                        </tr>
+                        <tr>
+                            <th>Celková cena:</th>
+                            <td><strong>{{ order.total_price }} Kč</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informace o zákazníkovi</h5>
+            </div>
+            <div class="card-body">
+                {% if order.user %}
+                    <div class="d-flex justify-content-between mb-3">
+                        <h6>{{ order.user.first_name }} {{ order.user.last_name }}</h6>
+                        <a href="{{ url_for('admin_users', search=order.user.email) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-user me-1"></i>Profil
+                        </a>
+                    </div>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ order.user.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Telefon:</th>
+                                <td>{{ order.user.phone or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Registrace:</th>
+                                <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Počet objednávek:</th>
+                                <td>{{ order.user.orders|length }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Uživatelský účet byl smazán.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Doručovací adresa</h5>
+            </div>
+            <div class="card-body">
+                <address>
+                    <strong>{{ order.shipping_name }}</strong><br>
+                    {{ order.shipping_address }}<br>
+                    {{ order.shipping_city }}, {{ order.shipping_zip }}<br>
+                    {{ order.shipping_country }}<br>
+                    {% if order.shipping_phone %}
+                        <abbr title="Telefon">Tel:</abbr> {{ order.shipping_phone }}
+                    {% endif %}
+                </address>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Poznámky</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_add_order_note', order_id=order.id) }}">
+                    <div class="mb-3">
+                        <label for="admin_note" class="form-label">Přidat interní poznámku</label>
+                        <textarea class="form-control" id="admin_note" name="note" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Uložit poznámku</button>
+                </form>
+                
+                <hr>
+                
+                <h6 class="mt-3">Existující poznámky</h6>
+                {% if order.admin_notes %}
+                    <div class="list-group mt-3">
+                        {% for note in order.admin_notes|sort(attribute='created_at', reverse=true) %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ note.admin.first_name }} {{ note.admin.last_name }}</h6>
+                                    <small>{{ note.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">{{ note.content }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Žádné poznámky</p>
+                {% endif %}
+                
+                {% if order.customer_note %}
+                    <h6 class="mt-4">Poznámka od zákazníka</h6>
+                    <div class="alert alert-info">
+                        {{ order.customer_note }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
